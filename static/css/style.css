@@ -1,0 +1,59 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #14161a;
+  color: #e8e8e8;
+}
+
+header {
+  padding: 1rem 1.5rem;
+  background: #1c1f24;
+  border-bottom: 1px solid #2a2e35;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+main {
+  padding: 1.5rem;
+}
+
+.camera-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.camera-tile {
+  background: #1c1f24;
+  border: 1px solid #2a2e35;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.camera-tile h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.camera-tile video {
+  width: 100%;
+  border-radius: 4px;
+  background: #000;
+  aspect-ratio: 16 / 9;
+}
+
+.empty-state {
+  color: #9aa0a8;
+}
+
+.empty-state code {
+  background: #1c1f24;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}

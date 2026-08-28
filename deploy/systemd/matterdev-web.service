@@ -1,0 +1,16 @@
+[Unit]
+Description=MatterDev camera viewer web app
+After=network-online.target mediamtx.service
+Requires=mediamtx.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/matterdev
+EnvironmentFile=-/opt/matterdev/.env
+ExecStart=/opt/matterdev/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+User=matterdev
+
+[Install]
+WantedBy=multi-user.target

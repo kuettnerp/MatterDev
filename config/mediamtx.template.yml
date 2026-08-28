@@ -1,0 +1,33 @@
+# Base MediaMTX settings. tools/gen_mediamtx_config.py reads this file, appends a
+# `paths:` entry per enabled camera from cameras.yaml, and writes the result to
+# deploy/mediamtx/mediamtx.generated.yml (which MediaMTX actually runs against).
+#
+# Do not add `paths:` here - it's generated. Everything else is passed through as-is.
+
+logLevel: info
+logDestinations: [stdout]
+
+# RTSP server stays on (default port 8554) - handy for viewing a feed directly in
+# VLC on the LAN, and it's what the web app's browser-facing HLS output is fed from.
+rtsp: yes
+rtspAddress: :8554
+
+# HLS output - what the browser actually plays via hls.js.
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigin: "*"
+hlsVariant: lowLatency
+
+# WebRTC is off for now (documented future upgrade path for lower latency than HLS -
+# flip to `yes` and no other changes are needed to switch the web app over later).
+webrtc: no
+
+# Status/control API - loopback only. It can return RTSP URLs with embedded
+# camera credentials, so it must never be reachable from wlan0/the home network.
+api: yes
+apiAddress: 127.0.0.1:9997
+
+# Don't tear a stream down when no one's watching - keeps re-connect latency low
+# and avoids repeatedly re-authenticating against older/flakier camera firmware.
+pathDefaults:
+  sourceOnDemand: false

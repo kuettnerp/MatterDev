@@ -1,0 +1,19 @@
+# Copy this file to cameras.yaml and fill in real values.
+# cameras.yaml is gitignored since rtsp_url embeds camera credentials.
+#
+# id: short slug, used in URLs (MediaMTX path, /api/cameras) - lowercase, no spaces.
+# name: display name shown in the web UI.
+# rtsp_url: full RTSP URL for the camera's stream, including credentials if required.
+#           Use tools/discover_cameras.py to find these once cameras are wired up.
+# enabled: set false to keep a camera defined but hidden from the UI / not ingested.
+
+cameras:
+  - id: front_door
+    name: "Front Door"
+    rtsp_url: "rtsp://user:pass@192.168.50.10:554/Streaming/Channels/101"
+    enabled: true
+
+  - id: backyard
+    name: "Backyard"
+    rtsp_url: "rtsp://user:pass@192.168.50.11:554/Streaming/Channels/101"
+    enabled: true
