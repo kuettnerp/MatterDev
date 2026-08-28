@@ -1,5 +1,44 @@
 # Camera discovery
 
+## Known hardware in this setup
+
+Two of the cameras in this system are identified as **LG Innotek RNTW-MN21A**
+(label on the camera body: model, serial, and MAC address). This model is
+from the LG Innotek line built for subscription home-security services
+(Vivint and similar Icontrol-lineage systems) and has an important
+architecture quirk: **the camera itself is Wi-Fi only, not Ethernet.** It's
+designed to pair with a companion **LG Innotek TWFB-R101D "PoE to Wi-Fi
+Bridge"** - that bridge is the thing that actually plugs into Ethernet/PoE;
+it then broadcasts a local Wi-Fi network for the camera(s) to join.
+
+This means, for these two cameras specifically:
+
+- **If you have the original TWFB-R101D bridge**: plug it into the PoE
+  switch like any other PoE device. It should power up, broadcast its Wi-Fi
+  network, and the cameras will associate with it automatically (they were
+  originally paired to it). From there they'll appear as normal hosts on the
+  `eth0` segment via the bridge, and standard discovery applies.
+- **If you don't have the bridge**: these two cameras have no way to join a
+  wired network on their own. You'd need to get one (used TWFB-R101D units
+  turn up on eBay/PicClick), or set them up to join Wi-Fi some other way if
+  the camera exposes a setup AP - not confirmed for this model.
+- These cameras are reported to serve **RTSP on port 1032** (in addition to
+  the standard 554) - `tools/discover_cameras.py` already tries both.
+- A commonly reported default credential pattern for this family: username
+  `admin`, password = the **last 6 hex digits of the camera's own MAC
+  address**, lowercase, no colons (e.g. MAC `30:A9:DE:A4:B7:B4` → password
+  `a4b7b4`). The discovery script tries this automatically when it can read
+  a MAC address off the `nmap` scan.
+- If pattern probing doesn't find the stream, a packet capture while the
+  camera boots and connects (`sudo tcpdump -i eth0 -w capture.pcap`, then
+  filter for RTSP setup traffic in Wireshark) is a documented fallback
+  specifically for this camera family.
+
+The other (turret-style) camera in this system does not have a visible LG
+Innotek label and may be a different, standalone Ethernet/PoE IP camera -
+treat it separately with the general discovery process below.
+
+
 Since the camera brand/protocol is unknown, use this process once the PoE
 switch is wired into the Pi's `eth0` and `dnsmasq` is running (see
 [`network-topology.md`](network-topology.md)).

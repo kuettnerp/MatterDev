@@ -15,6 +15,7 @@ block for you to review and paste in yourself.
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -27,6 +28,10 @@ COMMON_RTSP_PATHS = [
     "videoMain",
 ]
 
+# 554 is the standard RTSP port; 1032 shows up on Vivint/LG Innotek-lineage
+# cameras (e.g. the RNTW-MN21A) - see docs/camera-discovery.md.
+COMMON_RTSP_PORTS = (554, 1032)
+
 
 @dataclass
 class DiscoveredCamera:
@@ -36,10 +41,10 @@ class DiscoveredCamera:
     onvif_xaddr: str | None = None
 
 
-def scan_network(subnet: str) -> list[str]:
-    """Find live hosts on `subnet` via `nmap -sn`. Requires nmap installed
-    (`sudo apt install nmap`). `arp-scan --localnet` is an equally valid
-    lighter-weight alternative if you'd rather use that instead.
+def scan_network(subnet: str) -> dict[str, str | None]:
+    """Find live hosts on `subnet` via `nmap -sn`, returning {ip: mac_or_None}.
+    Requires nmap installed (`sudo apt install nmap`). `arp-scan --localnet` is
+    an equally valid lighter-weight alternative if you'd rather use that instead.
     """
     try:
         result = subprocess.run(
@@ -47,13 +52,18 @@ def scan_network(subnet: str) -> list[str]:
         )
     except FileNotFoundError:
         print("error: nmap not found. Install it with `sudo apt install nmap`.", file=sys.stderr)
-        return []
+        return {}
 
-    hosts = []
+    hosts: dict[str, str | None] = {}
+    current_ip: str | None = None
     for line in result.stdout.splitlines():
         if line.startswith("Nmap scan report for"):
-            host = line.rsplit(" ", 1)[-1].strip("()")
-            hosts.append(host)
+            current_ip = line.rsplit(" ", 1)[-1].strip("()")
+            hosts[current_ip] = None
+        elif line.startswith("MAC Address:") and current_ip:
+            match = re.match(r"MAC Address: ([0-9A-Fa-f:]+)", line)
+            if match:
+                hosts[current_ip] = match.group(1)
     return hosts
 
 
@@ -124,17 +134,31 @@ def onvif_get_stream_uri(xaddr: str, user: str, password: str) -> str | None:
         return None
 
 
-def try_common_rtsp_patterns(ip: str, user: str, password: str, port: int = 554) -> str | None:
-    """Fallback for hosts with port 554 open but no ONVIF response: try common
-    per-vendor RTSP URL patterns, validating each with ffprobe. If the cameras
-    were wired to a proprietary NVR/DVR box, that box's own IP is the first
-    thing worth trying this against - many expose RTSP even for otherwise
+def _mac_derived_password(mac: str) -> str:
+    """Some camera families (e.g. Vivint/LG Innotek RNTW-MN21A) default to
+    'admin' + the last 6 hex digits of the device's own MAC address."""
+    return re.sub(r"[^0-9A-Fa-f]", "", mac)[-6:].lower()
+
+
+def try_common_rtsp_patterns(
+    ip: str, user: str, password: str, mac: str | None = None, ports: tuple[int, ...] = COMMON_RTSP_PORTS
+) -> str | None:
+    """Fallback for hosts with no ONVIF response: try common per-vendor RTSP
+    URL patterns/ports, validating each with ffprobe. If the cameras were
+    wired to a proprietary NVR/DVR box, that box's own IP is the first thing
+    worth trying this against - many expose RTSP even for otherwise
     proprietary camera inputs.
     """
-    for path in COMMON_RTSP_PATHS:
-        url = f"rtsp://{user}:{password}@{ip}:{port}/{path}"
-        if _probe_rtsp_url(url):
-            return url
+    credential_pairs = [(user, password)]
+    if mac:
+        credential_pairs.append(("admin", _mac_derived_password(mac)))
+
+    for port in ports:
+        for cred_user, cred_password in credential_pairs:
+            for path in COMMON_RTSP_PATHS:
+                url = f"rtsp://{cred_user}:{cred_password}@{ip}:{port}/{path}"
+                if _probe_rtsp_url(url):
+                    return url
     return None
 
 
@@ -176,7 +200,7 @@ def discover(subnet: str, user: str, password: str) -> list[DiscoveredCamera]:
             onvif_hosts_by_ip[host] = xaddr
 
     discovered: list[DiscoveredCamera] = []
-    for ip in hosts:
+    for ip, mac in hosts.items():
         if ip in onvif_hosts_by_ip:
             xaddr = onvif_hosts_by_ip[ip]
             rtsp_url = onvif_get_stream_uri(xaddr, user, password)
@@ -184,7 +208,7 @@ def discover(subnet: str, user: str, password: str) -> list[DiscoveredCamera]:
                 discovered.append(DiscoveredCamera(ip=ip, rtsp_url=rtsp_url, source="onvif", onvif_xaddr=xaddr))
                 continue
 
-        rtsp_url = try_common_rtsp_patterns(ip, user, password)
+        rtsp_url = try_common_rtsp_patterns(ip, user, password, mac=mac)
         if rtsp_url:
             discovered.append(DiscoveredCamera(ip=ip, rtsp_url=rtsp_url, source="fallback-probe"))
 
