@@ -1,0 +1,40 @@
+#!/usr/sbin/nft -f
+#
+# Defense-in-depth for the camera segment. `net.ipv4.ip_forward=0` (the Raspberry
+# Pi OS default, left untouched by this project) already means eth0 <-> wlan0
+# traffic isn't routed. This ruleset makes that explicit and un-overridable by
+# a stray config change, and restricts what's reachable on wlan0 to just the
+# app itself.
+#
+# Install: sudo cp deploy/nftables/camera-isolation.nft /etc/nftables.d/  (or
+#          include it from /etc/nftables.conf) then `sudo systemctl enable --now nftables`
+# and re-run `sudo nft -f /etc/nftables.conf` (or reboot) to apply.
+#
+# Adjust wlan0/eth0 names first if your Pi's interfaces are named differently
+# (`ip link` to check).
+
+table inet camera_isolation {
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+
+        # Explicitly drop anything trying to bridge the two networks, even
+        # though ip_forward=0 already prevents this at the kernel level.
+        iifname "eth0" oifname "wlan0" drop
+        iifname "wlan0" oifname "eth0" drop
+    }
+
+    chain input {
+        type filter hook input priority 0; policy drop;
+
+        iif "lo" accept
+        ct state established,related accept
+
+        # Camera segment: only the Pi itself needs to talk to cameras (DHCP,
+        # RTSP pulls by MediaMTX, occasional ONVIF/admin-UI troubleshooting).
+        iifname "eth0" accept
+
+        # Home network: only the web app port + SSH.
+        iifname "wlan0" tcp dport { 22, 8000 } accept
+        iifname "wlan0" icmp type echo-request accept
+    }
+}

@@ -1,0 +1,16 @@
+[Unit]
+Description=MediaMTX RTSP/HLS restreaming server (camera segment ingest)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/matterdev
+ExecStartPre=/opt/matterdev/.venv/bin/python /opt/matterdev/tools/gen_mediamtx_config.py
+ExecStart=/opt/matterdev/deploy/mediamtx/mediamtx /opt/matterdev/deploy/mediamtx/mediamtx.generated.yml
+Restart=on-failure
+RestartSec=5
+User=matterdev
+
+[Install]
+WantedBy=multi-user.target

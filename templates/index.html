@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if cameras %}
+<div class="camera-grid">
+  {% for camera in cameras %}
+  <div class="camera-tile">
+    <h2>{{ camera.name }}</h2>
+    <video data-src="{{ camera.hls_url }}" controls autoplay muted playsinline></video>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">
+  No cameras configured. Copy <code>config/cameras.example.yaml</code> to
+  <code>config/cameras.yaml</code> and add your cameras.
+</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/hls-init.js"></script>
+{% endblock %}
