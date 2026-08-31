@@ -25,9 +25,9 @@ def api_cameras(request: Request, _: None = Depends(require_auth)) -> list[dict]
 
 
 @router.get("/")
-def index(request: Request, _: None = Depends(require_auth)):
+def index(request: Request, embed: bool = False, _: None = Depends(require_auth)):
     cameras: list[Camera] = request.app.state.cameras
     enabled_cameras = [c for c in cameras if c.enabled]
     return templates.TemplateResponse(
-        request, "index.html", {"cameras": enabled_cameras}
+        request, "index.html", {"cameras": enabled_cameras, "embed": embed}
     )

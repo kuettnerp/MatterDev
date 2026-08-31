@@ -7,9 +7,11 @@
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+  {% if not embed %}
   <header>
     <h1>MatterDev Camera Viewer</h1>
   </header>
+  {% endif %}
   <main>
     {% block content %}{% endblock %}
   </main>

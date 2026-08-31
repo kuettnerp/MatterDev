@@ -51,6 +51,18 @@ def test_api_cameras():
     ]
 
 
+def test_index_embed_hides_header():
+    cameras = [Camera(id="front_door", name="Front Door", rtsp_url="rtsp://x/stream", enabled=True)]
+    client = _client_with_cameras(cameras)
+
+    normal = client.get("/")
+    embed = client.get("/", params={"embed": "1"})
+
+    assert "<header>" in normal.text
+    assert "<header>" not in embed.text
+    assert "Front Door" in embed.text
+
+
 def test_basic_auth_enforced(monkeypatch):
     from app.settings import settings
 
