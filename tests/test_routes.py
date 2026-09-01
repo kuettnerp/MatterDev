@@ -84,6 +84,24 @@ def test_index_unknown_camera_id_404s():
     assert response.status_code == 404
 
 
+def test_index_defaults_to_muted_video():
+    cameras = [Camera(id="front_door", name="Front Door", rtsp_url="rtsp://x/stream", enabled=True)]
+    client = _client_with_cameras(cameras)
+
+    response = client.get("/")
+    assert "<video" in response.text
+    assert "muted" in response.text
+
+
+def test_index_muted_false_omits_muted_attribute():
+    cameras = [Camera(id="front_door", name="Front Door", rtsp_url="rtsp://x/stream", enabled=True)]
+    client = _client_with_cameras(cameras)
+
+    response = client.get("/", params={"muted": "false"})
+    assert "<video" in response.text
+    assert "muted" not in response.text
+
+
 def test_motion_event_accepted_for_known_camera():
     cameras = [Camera(id="front_door", name="Front Door", rtsp_url="rtsp://x/stream", enabled=True)]
     client = _client_with_cameras(cameras)

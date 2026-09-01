@@ -7,7 +7,7 @@
   {% for camera in cameras %}
   <div class="camera-tile">
     <h2>{{ camera.name }}</h2>
-    <video data-src="{{ camera.hls_url }}" data-camera-id="{{ camera.id }}" controls autoplay muted playsinline></video>
+    <video data-src="{{ camera.hls_url }}" data-camera-id="{{ camera.id }}" controls autoplay {% if muted %}muted{% endif %} playsinline></video>
   </div>
   {% endfor %}
 </div>

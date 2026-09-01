@@ -74,6 +74,7 @@ def index(
     request: Request,
     embed: bool = False,
     camera_id: str | None = None,
+    muted: bool = True,
     _: None = Depends(require_auth),
 ):
     cameras: list[Camera] = request.app.state.cameras
@@ -85,5 +86,5 @@ def index(
             raise HTTPException(status_code=404, detail=f"Unknown camera '{camera_id}'")
 
     return templates.TemplateResponse(
-        request, "index.html", {"cameras": enabled_cameras, "embed": embed}
+        request, "index.html", {"cameras": enabled_cameras, "embed": embed, "muted": muted}
     )
