@@ -70,9 +70,20 @@ def api_cameras(request: Request, _: None = Depends(require_auth)) -> list[dict]
 
 
 @router.get("/")
-def index(request: Request, embed: bool = False, _: None = Depends(require_auth)):
+def index(
+    request: Request,
+    embed: bool = False,
+    camera_id: str | None = None,
+    _: None = Depends(require_auth),
+):
     cameras: list[Camera] = request.app.state.cameras
     enabled_cameras = [c for c in cameras if c.enabled]
+
+    if camera_id is not None:
+        enabled_cameras = [c for c in enabled_cameras if c.id == camera_id]
+        if not enabled_cameras:
+            raise HTTPException(status_code=404, detail=f"Unknown camera '{camera_id}'")
+
     return templates.TemplateResponse(
         request, "index.html", {"cameras": enabled_cameras, "embed": embed}
     )

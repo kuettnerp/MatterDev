@@ -63,6 +63,27 @@ def test_index_embed_hides_header():
     assert "Front Door" in embed.text
 
 
+def test_index_filtered_to_single_camera():
+    cameras = [
+        Camera(id="front_door", name="Front Door", rtsp_url="rtsp://x/stream", enabled=True),
+        Camera(id="backyard", name="Backyard", rtsp_url="rtsp://y/stream", enabled=True),
+    ]
+    client = _client_with_cameras(cameras)
+
+    response = client.get("/", params={"camera_id": "backyard"})
+    assert response.status_code == 200
+    assert "Backyard" in response.text
+    assert "Front Door" not in response.text
+
+
+def test_index_unknown_camera_id_404s():
+    cameras = [Camera(id="front_door", name="Front Door", rtsp_url="rtsp://x/stream", enabled=True)]
+    client = _client_with_cameras(cameras)
+
+    response = client.get("/", params={"camera_id": "nonexistent"})
+    assert response.status_code == 404
+
+
 def test_motion_event_accepted_for_known_camera():
     cameras = [Camera(id="front_door", name="Front Door", rtsp_url="rtsp://x/stream", enabled=True)]
     client = _client_with_cameras(cameras)
