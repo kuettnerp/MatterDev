@@ -63,6 +63,22 @@ def test_index_embed_hides_header():
     assert "Front Door" in embed.text
 
 
+def test_motion_event_accepted_for_known_camera():
+    cameras = [Camera(id="front_door", name="Front Door", rtsp_url="rtsp://x/stream", enabled=True)]
+    client = _client_with_cameras(cameras)
+
+    response = client.post("/api/events/front_door/motion")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_motion_event_rejected_for_unknown_camera():
+    client = _client_with_cameras([])
+
+    response = client.post("/api/events/nonexistent/motion")
+    assert response.status_code == 404
+
+
 def test_basic_auth_enforced(monkeypatch):
     from app.settings import settings
 

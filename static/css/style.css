@@ -57,3 +57,22 @@ main {
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
 }
+
+#motion-banner {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  z-index: 1000;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  background: #d64545;
+  color: #fff;
+  font-weight: 600;
+  transform: translate(-50%, -150%);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+
+#motion-banner.visible {
+  transform: translate(-50%, 0);
+}

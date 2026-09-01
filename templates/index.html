@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div id="motion-banner" role="alert"></div>
 {% if cameras %}
 <div class="camera-grid">
   {% for camera in cameras %}
   <div class="camera-tile">
     <h2>{{ camera.name }}</h2>
-    <video data-src="{{ camera.hls_url }}" controls autoplay muted playsinline></video>
+    <video data-src="{{ camera.hls_url }}" data-camera-id="{{ camera.id }}" controls autoplay muted playsinline></video>
   </div>
   {% endfor %}
 </div>
@@ -20,4 +21,5 @@
 
 {% block scripts %}
 <script src="/static/js/hls-init.js"></script>
+<script src="/static/js/motion-events.js"></script>
 {% endblock %}
